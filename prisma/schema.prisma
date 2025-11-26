@@ -20,7 +20,7 @@ model User {
   updatedAt DateTime  @updatedAt
   comments  Comment[]
   likes     Like[]
-  posts     Post[]
+  posts     Post[]          
 }
 
 model Post {
@@ -29,6 +29,7 @@ model Post {
   title     String
   content   String
   thumbnail String?
+  path      String?
   published Boolean
   authorId  Int
   createdAt DateTime  @default(now())

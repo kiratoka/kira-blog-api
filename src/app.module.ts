@@ -12,6 +12,7 @@ import { TagModule } from './tag/tag.module';
 import { LikeModule } from './like/like.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { SupabaseModule } from './supabase/supabase.module';
 
 
 @Module({
@@ -30,6 +31,7 @@ import { ConfigModule } from '@nestjs/config';
     TagModule,
     LikeModule,
     AuthModule,
+    SupabaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
