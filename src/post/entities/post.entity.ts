@@ -28,8 +28,6 @@ export class Post {
   @Field()
   title: string
 
-
-
   @Field({ nullable: true })
   slug?: string
 
@@ -51,6 +49,8 @@ export class Post {
   @Field(() => User)
   author: User
 
+  @Field(() => String, { nullable: true })
+  path?: string
 
   @Field(() => [Tag])
   tags: Tag[]
@@ -62,6 +62,6 @@ export class Post {
   @Field(() => Count)
   _count: Count
 
-  
+
 }
 

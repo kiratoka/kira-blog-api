@@ -1,31 +1,16 @@
-import { Body, Controller, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CreatePostInput } from './dto/create-post.input';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 import { PostService } from './post.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { FILE_SIZE } from 'src/constants';
+import { UpdatePostInput } from './dto/update-post.input';
 
 @Controller('post')
 export class PostController {
     constructor(private postService: PostService) { }
 
-    /**
-     * Untuk tes endpoint ini di Postman:
-     * 1. Pilih method POST dan endpoint /post.
-     * 2. Di tab "Body", pilih "form-data".
-     * 3. Tambahkan kolom berikut:
-     *    - title (Text)
-     *    - content (Text)
-     *    - published (Text, isikan "true" atau "false")
-     *    - tags (Text, contoh: ["tag1","tag2"] atau ["tutorial"])
-     *    - thumbnail (File, jika ingin upload gambar)
-     * 4. Pastikan menambahkan token (akses) di Header:
-     *    - Key: Authorization
-     *    - Value: Bearer <your_token>
-     * 
-     * Jangan lupa published harus "true"/"false" string, tags dalam bentuk string array (bisa JSON.stringify array).
-     */
     @UseGuards(JwtAuthGuard)
     @Post()
     @UseInterceptors(
@@ -35,14 +20,12 @@ export class PostController {
         })
     )
     async create(
-        @Body() dto: any, // Pakai any agar Postman (form-data) tidak error parsing
+        @Body() dto: any,
         @UploadedFile() file: Express.Multer.File,
         @Req() req
     ) {
         const userId = req.user.id;
 
-        // Coerce/convert fields jika diperlukan (karena Postman form-data semua string)
-        // published: string -> boolean
         if (dto.published !== undefined) {
             dto.isPublished = dto.published === "true" || dto.published === true;
         }
@@ -61,4 +44,67 @@ export class PostController {
             file
         });
     }
+
+
+
+
+
+
+
+
+
+    // PATCH bisa menerima file yang optional. Jika tidak ada file yang diupload, file akan jadi undefined/null.
+    // Tinggal pastikan di service-nya, kalau file undefined maka logika update-nya jangan update thumbnail/path.
+
+    @UseGuards(JwtAuthGuard)
+    @Patch()
+    @UseInterceptors(
+        FileInterceptor("thumbnail", {
+            storage: memoryStorage(),
+            limits: { fileSize: FILE_SIZE }
+        })
+    )
+    async update(
+        @Body() dto: UpdatePostInput,
+        @UploadedFile() file: Express.Multer.File | undefined, // file bisa undefined kalau user tidak upload file baru
+        @Req() req
+    ) {
+        const userId = req.user.id;
+
+        // Baris ini sebenarnya mirip logika di create(), tujuannya untuk memastikan
+        // field published di DTO dikonversi dari string (bila dikirim "true"/"false" dari FormData)
+        // menjadi boolean. Tapi, di baris ini terjadi typo dengan memakai "isPublished", padahal
+        // di DTO/entitas field-nya "published" (bukan isPublished!). Jadi, assignment ini tidak ada efek,
+        // dan seharusnya cukup:
+
+        if (dto.tags && typeof dto.tags === "string") {
+            try {
+                dto.tags = JSON.parse(dto.tags);
+            } catch {
+                dto.tags = [];
+            }
+        }
+
+        return await this.postService.updatePost({
+            userId,
+            dto,
+            file // file bisa undefined/null; service harus handle kalau tidak ada file baru
+        });
+    }
+
+
+
+    @UseGuards(JwtAuthGuard)
+    @Delete()
+    async delete(@Body() body: { postId: number, path: string }, @Req() req) {
+        const userId = req.user.id
+        const { postId, path } = body;
+        // Pastikan postId ada dan bertipe number
+        if (!postId || typeof postId !== "number") {
+            throw new BadRequestException("postId is required and must be a number");
+        }
+        // Panggil service
+        return await this.postService.deletePost({ postId, userId, path });
+    }
+
 }

@@ -47,6 +47,7 @@ type Post {
   createdAt: DateTime!
   updatedAt: DateTime!
   author: User!
+  path: String
   tags: [Tag!]!
   comments: [CommentEntity!]!
   _count: Count!
