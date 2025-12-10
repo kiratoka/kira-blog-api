@@ -2,16 +2,12 @@ import { InputType, Field } from '@nestjs/graphql';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 @InputType()
-
-
-
 export class TagInput {
   @IsString()
-  id: string
-
+  id: string;
 
   @IsString()
-  name: string
+  name: string;
 }
 
 export class CreatePostInput {

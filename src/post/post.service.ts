@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { DEFAULT_PAGE_SIZE } from 'src/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreatePostInput } from './dto/create-post.input';
@@ -6,54 +10,59 @@ import { SupabaseService } from 'src/supabase/supabase.service';
 import { v4 as uuidv4 } from 'uuid';
 import { UpdatePostInput } from './dto/update-post.input';
 
-
-
 @Injectable()
 export class PostService {
-
-  constructor(private readonly prisma: PrismaService, private readonly supabaseService: SupabaseService) { }
-
-
-
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly supabaseService: SupabaseService,
+  ) {}
 
   async findAll({
     skip = 0,
-    take = DEFAULT_PAGE_SIZE }
-    :
-    {
-      skip?: number, take?: number
-
-    }) {
+    take = DEFAULT_PAGE_SIZE,
+  }: {
+    skip?: number;
+    take?: number;
+  }) {
     return await this.prisma.post.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
       skip,
-      take
+      take,
     });
   }
 
-
   async count() {
-    return await this.prisma.post.count()
+    return await this.prisma.post.count();
   }
 
   async findOne(id: number) {
     return await this.prisma.post.findFirst({
       where: {
-        id
+        id,
       },
       include: {
         author: true,
-        tags: true
-      }
-    })
+        tags: true,
+      },
+    });
   }
 
-  async findByUser({ userId, take, skip }: { userId: number, take: number, skip: number }) {
-
+  async findByUser({
+    userId,
+    take,
+    skip,
+  }: {
+    userId: number;
+    take: number;
+    skip: number;
+  }) {
     return await this.prisma.post.findMany({
       where: {
         author: {
-          id: userId
-        }
+          id: userId,
+        },
       },
       select: {
         id: true,
@@ -71,56 +80,54 @@ export class PostService {
         },
       },
       take,
-      skip
-
-
-    })
+      skip,
+    });
   }
 
-
   async userPostCount(userId: number) {
-
     try {
       const postCount = await this.prisma.post.count({
         where: {
-          authorId: userId
-        }
-      })
+          authorId: userId,
+        },
+      });
 
-      return postCount
-
+      return postCount;
     } catch (error) {
-      throw new Error("Error counting post datas")
+      throw new Error('Error counting post datas');
     }
-
   }
 
+  async createPost({
+    dto,
+    userId,
+    file,
+  }: {
+    userId: number;
+    dto: CreatePostInput;
+    file: Express.Multer.File;
+  }) {
+    if (!file) throw new BadRequestException('No file provided');
 
-  async createPost({ dto, userId, file }: { userId: number; dto: CreatePostInput; file: Express.Multer.File }) {
-
-    if (!file) throw new BadRequestException("No file provided")
-
-    const supabase = this.supabaseService.getClient()
+    const supabase = this.supabaseService.getClient();
     const fileName = `${Date.now()}-${uuidv4()}-${file.originalname.replace(/\s+/g, '-')}`;
-    const bucket = "kira-blog"
-
+    const bucket = 'kira-blog';
 
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(`images/${fileName}`, file.buffer, {
         contentType: file.mimetype,
-        upsert: false
-      })
+        upsert: false,
+      });
 
     if (error) {
       throw new BadRequestException(error.message || 'Upload failed');
     }
 
+    const path = data.path;
 
-    const path = data.path
-
-    const objectPublicUrl = supabase.storage.from(bucket).getPublicUrl(path)
-    const thumbnailUrl = objectPublicUrl.data.publicUrl
+    const objectPublicUrl = supabase.storage.from(bucket).getPublicUrl(path);
+    const thumbnailUrl = objectPublicUrl.data.publicUrl;
 
     // Generate slug from title
     const slugify = (text: string): string => {
@@ -133,10 +140,9 @@ export class PostService {
     };
     const slug = slugify(dto.title);
 
-
     // Pastikan tags berupa array objek {id, name}
     // Pastikan isPublished bertipe boolean
-    // Jika ternyata isPublished masih string, lakukan konversi: 
+    // Jika ternyata isPublished masih string, lakukan konversi:
     //   const isPublished = typeof dto.isPublished === "string" ? dto.isPublished === "true" : dto.isPublished;
 
     // Kode hasil revisi:
@@ -148,29 +154,32 @@ export class PostService {
         content: dto.content,
         thumbnail: thumbnailUrl,
         // Konversi ke boolean karena kemungkinan dapat string dari FormData
-        published: typeof dto.published === "string" ? dto.published === "true" : !!dto.published,
+        published:
+          typeof dto.published === 'string'
+            ? dto.published === 'true'
+            : !!dto.published,
         author: {
           connect: {
-            id: userId
-          }
+            id: userId,
+          },
         },
         tags: {
           connectOrCreate: dto.tags.map((tag) => ({
             where: {
-              name: tag.name
+              name: tag.name,
             },
             create: {
-              name: tag.name
-            }
-          }))
-        }
-      }
-    })
+              name: tag.name,
+            },
+          })),
+        },
+      },
+    });
   }
 
   /**
    * Bagaimana sebaiknya menangani update post dengan thumbnail/file yang opsional?
-   * 
+   *
    * Jawaban:
    * - Kalau file (thumbnail baru) ADA:
    *   - Upload file baru ke storage (Supabase).
@@ -190,20 +199,24 @@ export class PostService {
     userId,
     dto,
     file,
-  }: { userId: number, dto: UpdatePostInput, file: Express.Multer.File | undefined }) {
+  }: {
+    userId: number;
+    dto: UpdatePostInput;
+    file: Express.Multer.File | undefined;
+  }) {
     const supabase = this.supabaseService.getClient();
     let newThumbnailUrl: string | undefined = undefined;
     let newPath: string | undefined = undefined;
 
     if (file) {
       const fileName = `${Date.now()}-${uuidv4()}-${file.originalname.replace(/\s+/g, '-')}`;
-      const bucket = "kira-blog";
-
-
+      const bucket = 'kira-blog';
 
       // Hapus file lama jika ada path lama
       if (dto.path) {
-        const { error: deleteError } = await supabase.storage.from(bucket).remove([dto.path]);
+        const { error: deleteError } = await supabase.storage
+          .from(bucket)
+          .remove([dto.path]);
         if (deleteError) {
           // Tidak gagal jika hapus gagal, lanjut update
           console.log('Failed to delete old file:', deleteError.message);
@@ -223,7 +236,9 @@ export class PostService {
       }
 
       newPath = data.path;
-      const objectPublicUrl = supabase.storage.from(bucket).getPublicUrl(newPath);
+      const objectPublicUrl = supabase.storage
+        .from(bucket)
+        .getPublicUrl(newPath);
       newThumbnailUrl = objectPublicUrl.data.publicUrl;
     }
 
@@ -238,7 +253,7 @@ export class PostService {
     };
     const slug = slugify(dto.title);
 
-    console.log("Ini adalah dtoId :", dto.id);
+    console.log('Ini adalah dtoId :', dto.id);
 
     // Catatan penting:
     // - Field thumbnail & path hanya ikut di-update jika ada file baru.
@@ -253,30 +268,41 @@ export class PostService {
         // hanya update thumbnail/path jika ada yang baru
         ...(newThumbnailUrl && { thumbnail: newThumbnailUrl }),
         ...(newPath && { path: newPath }),
-        published: typeof dto.published === "string" ? dto.published === "true" : !!dto.published,
+        published:
+          typeof dto.published === 'string'
+            ? dto.published === 'true'
+            : !!dto.published,
         tags: {
           connectOrCreate: dto.tags.map((tag) => ({
             where: {
-              name: tag.name
+              name: tag.name,
             },
             create: {
-              name: tag.name
-            }
-          }))
+              name: tag.name,
+            },
+          })),
         },
         slug: slug,
         // field lain jika perlu
-      }
+      },
     });
   }
 
-
-
-  async deletePost({ postId, userId, path }: { postId: number, userId: number, path: string }) {
+  async deletePost({
+    postId,
+    userId,
+    path,
+  }: {
+    postId: number;
+    userId: number;
+    path: string;
+  }) {
     const supabase = this.supabaseService.getClient();
-    const bucket = "kira-blog";
+    const bucket = 'kira-blog';
     if (path) {
-      const { error: deleteError } = await supabase.storage.from(bucket).remove([path]);
+      const { error: deleteError } = await supabase.storage
+        .from(bucket)
+        .remove([path]);
       if (deleteError) {
         // Tidak gagal jika hapus gagal, lanjut update
         console.log('Failed to delete old file:', deleteError.message);
@@ -288,17 +314,17 @@ export class PostService {
     // Jadi kalau userId bukan author, maka tidak ada row yang dihapus, dan result akan null/undefined.
     // Kita bisa mengandalkan hasil dari delete, sehingga cukup cek !result untuk lempar UnauthorizedException.
 
-    const result = await this.prisma.post.delete({
-      where: {
-        id: postId,
-        authorId: userId,
-      },
-    }).catch(() => null); // Prisma akan throw error jika tidak menemukan (bukan return null), jadi kita tangani error jadi null
+    const result = await this.prisma.post
+      .delete({
+        where: {
+          id: postId,
+          authorId: userId,
+        },
+      })
+      .catch(() => null); // Prisma akan throw error jika tidak menemukan (bukan return null), jadi kita tangani error jadi null
 
     if (!result) throw new UnauthorizedException();
 
-
-    return !!result
-
+    return !!result;
   }
 }

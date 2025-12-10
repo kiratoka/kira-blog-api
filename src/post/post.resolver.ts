@@ -10,33 +10,27 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants';
 
 @Resolver(() => Post)
 export class PostResolver {
-  constructor(private readonly postService: PostService) { }
-
+  constructor(private readonly postService: PostService) {}
 
   // @UseGuards(JwtAuthGuard)
   @Query(() => [Post], { name: 'posts' })
   findAll(
     @Context() context,
-    @Args("skip", { nullable: true }) skip?: number,
-    @Args("take", { nullable: true }) take?: number,
-
-
+    @Args('skip', { nullable: true }) skip?: number,
+    @Args('take', { nullable: true }) take?: number,
   ) {
-
     return this.postService.findAll({ skip, take });
   }
 
-  @Query(() => Int, { name: "postCount" })
+  @Query(() => Int, { name: 'postCount' })
   count() {
-    return this.postService.count()
+    return this.postService.count();
   }
 
   @Query(() => Post)
-  getPostById(@Args("id", { type: () => Int }) id: number) {
-    return this.postService.findOne(id)
+  getPostById(@Args('id', { type: () => Int }) id: number) {
+    return this.postService.findOne(id);
   }
-
-
 
   @UseGuards(JwtAuthGuard)
   @Query(() => [Post])
@@ -51,9 +45,8 @@ export class PostResolver {
       skip: skip ?? 0,
       take: take ?? DEFAULT_PAGE_SIZE,
     });
-  }   
+  }
 
-  
   @Query(() => Int)
   @UseGuards(JwtAuthGuard)
   userPostCount(@Context() context) {
@@ -61,7 +54,6 @@ export class PostResolver {
     return this.postService.userPostCount(userId);
   }
 
- 
   // @UseGuards(JwtAuthGuard)
   // @Mutation(() => Boolean)
   // deletePost(
@@ -71,7 +63,4 @@ export class PostResolver {
   //   const userId = context.req.user.id;
   //   return this.postService.delete({ postId, userId });
   // }
-
-
-
 }

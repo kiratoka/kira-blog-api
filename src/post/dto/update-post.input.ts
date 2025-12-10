@@ -1,11 +1,11 @@
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
-import { CreatePostInput, TagInput } from './create-post.input';
-import { InputType, Field, Int, PartialType } from '@nestjs/graphql';
+import { TagInput } from './create-post.input';
+import { InputType, Field, Int } from '@nestjs/graphql';
 
 @InputType()
 export class UpdatePostInput {
   @Field(() => Int)
-  id: number
+  id: number;
 
   @IsString()
   @Field()
@@ -27,6 +27,6 @@ export class UpdatePostInput {
   @Field(() => Boolean)
   published: boolean;
 
-  @Field(() => String, {nullable: true})
-  path?: string
+  @Field(() => String, { nullable: true })
+  path?: string;
 }

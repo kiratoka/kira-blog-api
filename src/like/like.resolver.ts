@@ -6,43 +6,41 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 
 @Resolver(() => Like)
 export class LikeResolver {
-  constructor(private readonly likeService: LikeService) { }
-
-
-  @UseGuards(JwtAuthGuard)
-  @Mutation(() => Boolean)
-  async likePost(@Context() context, @Args("postId", { type: () => Int }) postId: number) {
-
-    const userId = context.req.user.id
-    return await this.likeService.likePost({ postId, userId })
-
-  }
-
+  constructor(private readonly likeService: LikeService) {}
 
   @UseGuards(JwtAuthGuard)
   @Mutation(() => Boolean)
-  async unlikePost(@Context() context, @Args("postId", { type: () => Int }) postId: number) {
-
-    const userId = context.req.user.id
-    return await this.likeService.unlikePost({ postId, userId })
-
+  async likePost(
+    @Context() context,
+    @Args('postId', { type: () => Int }) postId: number,
+  ) {
+    const userId = context.req.user.id;
+    return await this.likeService.likePost({ postId, userId });
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Boolean)
+  async unlikePost(
+    @Context() context,
+    @Args('postId', { type: () => Int }) postId: number,
+  ) {
+    const userId = context.req.user.id;
+    return await this.likeService.unlikePost({ postId, userId });
+  }
 
   @Query(() => Int)
-  async postLikesCount(@Args("postId", { type: () => Int! }) postId: number) {
-
-    return await this.likeService.getPostLikesCount(postId)
+  async postLikesCount(@Args('postId', { type: () => Int }) postId: number) {
+    return await this.likeService.getPostLikesCount(postId);
   }
-
-
 
   @UseGuards(JwtAuthGuard)
   @Query(() => Boolean)
-  async userLikedPost(@Context() context, @Args("postId", { type: () => Int! }) postId: number) {
-    const userId = context.req.user.id
+  async userLikedPost(
+    @Context() context,
+    @Args('postId', { type: () => Int }) postId: number,
+  ) {
+    const userId = context.req.user.id;
 
-    return await this.likeService.userLikedPost({ postId, userId })
+    return await this.likeService.userLikedPost({ postId, userId });
   }
-
 }

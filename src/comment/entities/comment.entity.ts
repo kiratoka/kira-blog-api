@@ -5,25 +5,20 @@ import { User } from 'src/user/entities/user.entity';
 @ObjectType()
 export class CommentEntity {
   @Field(() => Int)
-  id: number
-
+  id: number;
 
   @Field()
-  content: string
-
+  content: string;
 
   @Field(() => Post)
-  post: Post
-
+  post: Post;
 
   @Field(() => User)
-  author: User
-
+  author: User;
 
   @Field()
-  createdAt: Date
+  createdAt: Date;
 
-  
   @Field()
-  updatedAt: Date
+  updatedAt: Date;
 }

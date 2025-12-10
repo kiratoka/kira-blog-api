@@ -16,31 +16,32 @@ import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService, private readonly configService: ConfigService) { }
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
-    @UseGuards(GoogleAuthGuard)
-    @Get('google/login')
-    googleLogin() {
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/login')
+  googleLogin() {}
 
-    }
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/callback')
+  async googleCallback(@Request() req, @Res() res: Response) {
+    // console.log("user", req.user);
 
-    @UseGuards(GoogleAuthGuard)
-    @Get('google/callback')
-    async googleCallback(@Request() req, @Res() res: Response) {
-        // console.log("user", req.user);
+    const userData = await this.authService.login(req.user);
 
-        const userData = await this.authService.login(req.user);
+    const frontEndUrl = this.configService.get<string>('FRONTEND_URL');
 
-        const frontEndUrl = this.configService.get<string>("FRONTEND_URL")
+    res.redirect(
+      `${frontEndUrl}/api/auth/google/callback?userId=${userData.id}&name=${userData.name}&avatar=${userData.avatar}&accessToken=${userData.accessToken}`,
+    );
+  }
 
-        res.redirect(`${frontEndUrl}/api/auth/google/callback?userId=${userData.id}&name=${userData.name}&avatar=${userData.avatar}&accessToken=${userData.accessToken}`);
-    }
-
-
-    @UseGuards(JwtAuthGuard)
-    @Get('verify-token')
-    verify() {
-        return "ok"
-    }
-
+  @UseGuards(JwtAuthGuard)
+  @Get('verify-token')
+  verify() {
+    return 'ok';
+  }
 }

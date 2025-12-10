@@ -8,7 +8,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { AuthController } from './auth.controller';
 
-
 @Module({
   imports: [
     JwtModule.registerAsync({
@@ -22,7 +21,13 @@ import { AuthController } from './auth.controller';
       }),
     }),
   ],
-  providers: [AuthResolver, AuthService, PrismaService, JwtStrategy, GoogleStrategy,],
+  providers: [
+    AuthResolver,
+    AuthService,
+    PrismaService,
+    JwtStrategy,
+    GoogleStrategy,
+  ],
   controllers: [AuthController],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -10,81 +10,76 @@ import { CreateUserInput } from 'src/user/dto/create-user.input';
 
 @Injectable()
 export class AuthService {
-    constructor(private prisma: PrismaService, private jwtService: JwtService) { }
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
-    async validateLocalUser({ email, password }: SignInInput) {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                email
-            }
-        })
+  async validateLocalUser({ email, password }: SignInInput) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
+    if (!user) throw new UnauthorizedException('User Not Found');
 
+    if (user.password) {
+      const passwordMatched = await verify(user.password, password);
+      if (!passwordMatched)
+        throw new UnauthorizedException('Invalid Credentials');
+    }
+    return user;
+  }
 
-        if (!user) throw new UnauthorizedException("User Not Found")
+  async generateToken(userId: number) {
+    const payload: AuthJwtPayload = { sub: userId };
+    const accessToken = await this.jwtService.signAsync(payload);
+    return { accessToken };
+  }
 
-        if (user.password) {
-            const passwordMatched = await verify(user.password, password)
-            if (!passwordMatched) throw new UnauthorizedException("Invalid Credentials")
-        }
-        return user
+  async login(user: User) {
+    const { accessToken } = await this.generateToken(user.id);
+    return {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      accessToken,
+    };
+  }
+
+  async validateJwtUser(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User Not Found');
     }
 
+    const currentUser = { id: userId };
+    return currentUser;
+  }
 
-    async generateToken(userId: number) {
-        const payload: AuthJwtPayload = { sub: userId }
-        const accessToken = await this.jwtService.signAsync(payload)
-        return { accessToken }
+  async validateGoogleUser(googleUser: CreateUserInput) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: googleUser.email },
+    });
+
+    if (user) {
+      const { password, ...authUser } = user;
+      return authUser;
     }
 
+    const dbUser = await this.prisma.user.create({
+      data: {
+        ...googleUser,
+      },
+    });
 
-    async login(user: User) {
-        const { accessToken } = await this.generateToken(user.id)
-        return {
-            id: user.id,
-            name: user.name,
-            avatar: user.avatar,
-            accessToken
-        }
-    }
-
-    async validateJwtUser(userId: number) {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                id: userId
-            }
-        })
-
-        if (!user) {
-            throw new UnauthorizedException("User Not Found")
-        }
-
-        const currentUser = { id: userId }
-        return currentUser
-    }
-
-
-    async validateGoogleUser(googleUser: CreateUserInput) {
-        const user = await this.prisma.user.findUnique({
-            where: { email: googleUser.email }
-        })
-
-        if (user) {
-            const { password, ...authUser } = user
-            return authUser
-        }
-
-
-        const dbUser = await this.prisma.user.create({
-            data: {
-                ...googleUser,
-            }
-        })
-            
-        const { password, ...authUser } = dbUser
-        return authUser
-    }
-
-
+    const { password, ...authUser } = dbUser;
+    return authUser;
+  }
 }
-

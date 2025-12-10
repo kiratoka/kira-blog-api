@@ -4,20 +4,15 @@ import { User } from 'src/user/entities/user.entity';
 
 @ObjectType()
 export class Like {
-
   @Field(() => Int)
-  id: number
-
-
+  id: number;
 
   @Field(() => User)
-  user: User
-
+  user: User;
 
   @Field(() => Post)
-  post: Post
-
+  post: Post;
 
   @Field()
-  createdAt: Date
+  createdAt: Date;
 }

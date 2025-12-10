@@ -7,7 +7,13 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Module({
-  providers: [PostResolver, PostService, PrismaService, JwtAuthGuard, SupabaseService],
+  providers: [
+    PostResolver,
+    PostService,
+    PrismaService,
+    JwtAuthGuard,
+    SupabaseService,
+  ],
   controllers: [PostController],
 })
-export class PostModule { }
+export class PostModule {}

@@ -4,7 +4,7 @@ import { Post } from 'src/post/entities/post.entity';
 
 @ObjectType()
 export class User {
-  @Field(type => Int)
+  @Field((type) => Int)
   id: number;
 
   @Field()
@@ -13,15 +13,15 @@ export class User {
   @Field()
   email: string;
 
-  @Field(type => String, { nullable: true })
+  @Field((type) => String, { nullable: true })
   bio?: string | null;
 
-  @Field(type => String, { nullable: true })
+  @Field((type) => String, { nullable: true })
   avatar?: string | null;
 
-  @Field(type => [Post], { nullable: true })
+  @Field((type) => [Post], { nullable: true })
   posts?: Post[];
 
-  @Field(type => [CommentEntity], { nullable: true })
+  @Field((type) => [CommentEntity], { nullable: true })
   comments?: CommentEntity[];
 }
