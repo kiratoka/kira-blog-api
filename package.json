@@ -20,7 +20,7 @@
     "db:seed": "ts-node ./prisma/seed.ts"
   },
   "dependencies": {
-    "@apollo/server": "^4.12.2",
+    "@apollo/server": "^5.2.0",
     "@as-integrations/express5": "^1.1.2",
     "@faker-js/faker": "^10.1.0",
     "@nestjs/apollo": "^13.2.1",
