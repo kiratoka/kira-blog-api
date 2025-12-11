@@ -23,9 +23,8 @@ export class UpdatePostInput {
   @Field(() => [TagInput])
   tags: TagInput[];
 
-  @IsBoolean()
   @Field(() => Boolean)
-  published: boolean;
+  published: boolean ;
 
   @Field(() => String, { nullable: true })
   path?: string;

@@ -20,7 +20,7 @@ import { UpdatePostInput } from './dto/update-post.input';
 
 @Controller('post')
 export class PostController {
-  constructor(private postService: PostService) {}
+  constructor(private postService: PostService) { }
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -74,11 +74,26 @@ export class PostController {
   ) {
     const userId = req.user.id;
 
+
     // Baris ini sebenarnya mirip logika di create(), tujuannya untuk memastikan
     // field published di DTO dikonversi dari string (bila dikirim "true"/"false" dari FormData)
     // menjadi boolean. Tapi, di baris ini terjadi typo dengan memakai "isPublished", padahal
     // di DTO/entitas field-nya "published" (bukan isPublished!). Jadi, assignment ini tidak ada efek,
     // dan seharusnya cukup:
+    // Kenapa di create post meskipun pakai @IsBoolean pada field published tidak error, padahal field yang dikirim lewat FormData (dari FE) adalah string ("true"/"false")?
+    // Jawabannya: pada create(), parameternya adalah @Body() dto: any (bukan CreatePostInput). Jadi, validasi class-validator (seperti @IsBoolean) TIDAK DIJALANKAN oleh pipe NestJS,
+    // sehingga method controller tetap dieksekusi walaupun field published masih string (atau bahkan tidak sesuai tipe).
+    // Proses konversi tipe (string->boolean) dilakukan manual di controller sebelum diteruskan ke service.
+    // 
+    // Sedangkan pada update(), param-nya adalah @Body() dto: UpdatePostInput dan pakai decorator dari class-validator.
+    // Untuk request PATCH berisi multipart/form-data (FormData) yang mengirim boolean/array sebagai string, pipe NestJS akan mencoba mem-build DTO/validate,
+    // tapi gagal karena published seharusnya boolean, sedangkan data "true"/"false" (string) tidak lolos validasi @IsBoolean.
+    // Akibatnya, method handler TIDAK DIPANGGIL dan error langsung dilempar oleh NestJS (misal: Bad Request karena validation failed).
+    // 
+    // Singkatnya:
+    // - create() tidak error karena pakai any → tidak ada validasi pipe DTO di controller
+    // - update() error jika tipe data tidak cocok DTO+validator, terutama pada multipart/form-data
+    // Solusi: kalau ingin handle parsing custom, pakai @Body() dto: any lalu parsing/konversi/validasi manual di controller sebelum dilempar ke service.
 
     if (dto.tags && typeof dto.tags === 'string') {
       try {

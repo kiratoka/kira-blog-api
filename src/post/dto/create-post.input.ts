@@ -27,7 +27,7 @@ export class CreatePostInput {
   @Field(() => [TagInput])
   tags: TagInput[];
 
-  @IsBoolean()
+  
   @Field(() => Boolean)
   published: boolean;
 }

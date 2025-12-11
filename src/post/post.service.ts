@@ -253,7 +253,7 @@ export class PostService {
     };
     const slug = slugify(dto.title);
 
-    console.log('Ini adalah dtoId :', dto.id);
+    console.log("ini adalah published :", dto.published);
 
     // Catatan penting:
     // - Field thumbnail & path hanya ikut di-update jika ada file baru.
